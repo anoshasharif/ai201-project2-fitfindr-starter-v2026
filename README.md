@@ -59,24 +59,28 @@
 
 ### `search_listings`
 
-- **What it does:**
-- **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Searches the listings data for items that match the user's description, size, and maximum price.
+- **Inputs:** `description` (str), `size` (str or None), `max_price` (float or None)
+- **Returns:** A list of matching listing dictionaries, each containing `id`, `title`, `description`, `category`, `style_tags`, `size`, `condition`, `price`, `colors`, `brand`, and `platform`.
+- **When it has nothing:** Returns an empty list `[]`.
 
-### `suggest_outfit`
+#### `suggest_outfit`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Suggests one or two outfits using the new item and the user's wardrobe.
+- **Inputs:** `new_item` (dict), `wardrobe` (dict)
+- **Returns:** A non-empty string containing one or two outfit suggestions using the new item and, when available, specific items from the user's wardrobe.
+- **When it has nothing:** If the wardrobe has no items, returns a non-empty string with general styling ideas for the new item instead.
 
 ### `create_fit_card`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Creates a short caption someone would actually post about the new item and outfit.
+- **Inputs:** `outfit` (str), `new_item` (dict)
+- **Returns:** A two-to-four sentence caption that mentions the item, its price and platform, and describes the outfit's vibe.
+- **When it has nothing:** If `outfit` is empty or contains only whitespace, returns a descriptive message instead of raising an error.
+
+### Branch Rule
+
+If `search_listings` returns an empty list, put a message in the session state saying that no matching listings were found and stop the loop. Otherwise, take the first matching listing and pass it to `suggest_outfit`.
 
 ---
 
