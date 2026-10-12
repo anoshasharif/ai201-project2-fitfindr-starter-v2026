@@ -18,6 +18,8 @@ import trace
 from tools import suggest_outfit, create_fit_card
 from mcp_client import call_tool
 from generate import ModelUnavailable
+from trace import check_iterations, start_trace, step
+
 
 
 # ── session state ─────────────────────────────────────────────────────────────
@@ -107,6 +109,7 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         than a stack trace. The import is already at the top of this file.
     """
     session = new_session(query, wardrobe)
+    start_trace()
 
     # TODO: delete these two lines and build the loop.
     count = 1
@@ -155,6 +158,12 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     "max_price": session["parsed"]["max_price"],
     })
 
+    step(
+        "search_listings (via MCP)",
+        inputs=session["parsed"],
+        returned=session["search_results"],
+    )
+
     # Branch: stop immediately if search found nothing.
     if not session["search_results"]:
         session["error"] = (
@@ -165,18 +174,44 @@ def run_agent(query: str, wardrobe: dict) -> dict:
 
     session["selected_item"] = session["search_results"][0]
 
-    session["outfit_suggestion"] = suggest_outfit(
-        session["selected_item"],
-        session["wardrobe"],
-    )
+    try:
 
-    session["fit_card"] = create_fit_card(
-        session["outfit_suggestion"],
-        session["selected_item"],
-    )
+        session["outfit_suggestion"] = suggest_outfit(
+            session["selected_item"],
+            session["wardrobe"],
+        )
+
+        step(
+            "suggest_outfit",
+            inputs={
+                "new_item": session["selected_item"],
+                "wardrobe": session["wardrobe"],
+            },
+            returned=session["outfit_suggestion"],
+        )
+
+        session["fit_card"] = create_fit_card(
+            session["outfit_suggestion"],
+            session["selected_item"],
+        )
+
+        step(
+            "create_fit_card",
+            inputs={
+                "outfit": session["outfit_suggestion"],
+                "new_item": session["selected_item"],
+            },
+            returned=session["fit_card"],
+        )
+
+    except ModelUnavailable:
+        session["error"] = (
+            "The AI model could not be reached. Please check your API key "
+            "or try again later."
+        )
+        return session
 
     return session
-
 
 # ── running it directly ───────────────────────────────────────────────────────
 
