@@ -12,7 +12,7 @@ Build and test your three tools in `tools.py` first. Then come here.
 
     python agent.py          runs both example paths below
 """
-
+import re
 import config
 import trace
 from tools import search_listings, suggest_outfit, create_fit_card
@@ -108,7 +108,72 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     session = new_session(query, wardrobe)
 
     # TODO: delete these two lines and build the loop.
-    session["error"] = "The planning loop isn't built yet — see the TODO in agent.py."
+    count = 1
+    trace.check_iterations(count)
+
+    # Parse the maximum price from something like "under $30"
+    price_match = re.search(r"under\s*\$?(\d+(?:\.\d+)?)", query, re.IGNORECASE)
+    max_price = float(price_match.group(1)) if price_match else None
+
+    # Parse the size from something like "size M"
+    size_match = re.search(r"\bsize\s+([A-Za-z0-9/]+)", query, re.IGNORECASE)
+    size = size_match.group(1) if size_match else None
+
+    # Remove the price and size phrases so the rest becomes the description
+    description = re.sub(
+        r"under\s*\$?\d+(?:\.\d+)?",
+        "",
+        query,
+        flags=re.IGNORECASE,
+    )
+    description = re.sub(
+        r"\bsize\s+[A-Za-z0-9/]+",
+        "",
+        description,
+        flags=re.IGNORECASE,
+    )
+
+    # Remove common conversational wording that is not part of the item
+    description = re.sub(
+        r"\b(?:looking for|i am looking for|i'm looking for|find me|want|a|an)\b",
+        " ",
+        description,
+        flags=re.IGNORECASE,
+    )
+    description = " ".join(description.split()).strip(" ,")
+
+    session["parsed"] = {
+        "description": description,
+        "size": size,
+        "max_price": max_price,
+    }
+
+    session["search_results"] = search_listings(
+        session["parsed"]["description"],
+        session["parsed"]["size"],
+        session["parsed"]["max_price"],
+    )
+
+    # Branch: stop immediately if search found nothing.
+    if not session["search_results"]:
+        session["error"] = (
+            "No matching listings were found. Try changing the description, "
+            "choosing a different size, or increasing your maximum price."
+        )
+        return session
+
+    session["selected_item"] = session["search_results"][0]
+
+    session["outfit_suggestion"] = suggest_outfit(
+        session["selected_item"],
+        session["wardrobe"],
+    )
+
+    session["fit_card"] = create_fit_card(
+        session["outfit_suggestion"],
+        session["selected_item"],
+    )
+
     return session
 
 
