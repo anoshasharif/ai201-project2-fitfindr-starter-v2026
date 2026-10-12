@@ -41,7 +41,7 @@
 
 <!-- Three or four sentences: what a user asks for, and what they get back. -->
 
-
+FitFindr helps users search for thrifted clothing items based on a description, size, and maximum price. It searches through available listings and selects a matching item. It then uses the user's wardrobe to suggest one or two outfits that pair with the selected item. Finally, it creates a short fit card caption describing the item and outfit.
 
 ---
 
@@ -97,14 +97,13 @@ If `search_listings` returns an empty list, put a message in the session state s
      The grader checks your code against what you claim here, so the file and
      function have to be real. -->
 
-**Branch rule:**
+**Branch rule:** If `search_listings` returns an empty list, put a helpful message in `session["error"]` telling the user to change the description, size, or maximum price, and stop. Otherwise, select the first search result and continue to `suggest_outfit`, then `create_fit_card`.
 
 **Where it lives:** `agent.py::run_agent`
 
-**How the query is parsed:** <!-- regex, string splitting, or asking the model — say which -->
+**How the query is parsed:** The query is parsed using regular expressions and string cleanup to extract the maximum price and size and use the remaining words as the item description.
 
-**What moves through the session:** <!-- which fields, in what order -->
-
+**What moves through the session:** The parsed query is stored in `session["parsed"]`, followed by the search results in `session["search_results"]`. The first result becomes `session["selected_item"]`, which is read back from the session and passed to `suggest_outfit`. The outfit is stored in `session["outfit_suggestion"]`, then passed with the selected item to `create_fit_card`, whose result is stored in `session["fit_card"]`.
 ---
 
 ## Sample Run
@@ -117,7 +116,31 @@ If `search_listings` returns an empty list, put a message in the session state s
 **One full query**
 
 ```
-$ python app.py ask '...'
+$ python app.py ask 'vintage graphic tee under $30'
+
+Found: Y2K Baby Tee — Butterfly Print — $18.0 on depop
+
+Outfit: Here are two cute outfit ideas using the Y2K Butterfly Baby Tee and pieces you already own:
+
+**Outfit 1: Casual Y2K Streetwear**
+* **Top:** Y2K Butterfly Baby Tee
+* **Bottoms:** Baggy straight-leg jeans (dark wash)
+* **Outerwear:** Black cropped zip hoodie (worn open or layered over your shoulders)
+* **Shoes:** Chunky white sneakers
+* **Accessories:** Black crossbody bag
+* **Why it works:** The fitted, cropped silhouette of the baby tee balances out the volume of your baggy dark-wash jeans for that quintessential early 2000s streetwear proportion.
+
+**Outfit 2: Effortless Contrast (Soft & Edgy)**
+* **Top:** Y2K Butterfly Baby Tee
+* **Bottoms:** Wide-leg khaki trousers
+* **Outerwear:** Vintage black denim jacket
+* **Shoes:** Black combat boots
+* **Accessories:** Brown leather belt
+* **Why it works:** This plays on the contrast between the girly, pastel butterfly print and the utilitarian, grunge feel of your black denim jacket and combat boots, anchored nicely by neutral khaki trousers.
+
+Fit card: Obsessed with this Y2K butterfly baby tee I just listed on Depop for $18! It's giving major early 2000s streetwear vibes when you style it with baggy dark-wash jeans and chunky sneakers. Grab it before it’s gone and let your inner brat-pack era shine! 🦋✨
+
+0 model calls this session, 2 served from cache
 
 ```
 
@@ -168,15 +191,16 @@ Nothing beats the effortless vibe of a classic vintage fit. These dreamy vintage
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked AI to help me implement `search_listings` so it could search by description, size, and maximum price while following the required empty-list behavior.
+- *What came back:* AI helped me build keyword matching, size matching, and price filtering. When I first tested the implementation, I got a `NameError` because the regular expression code used `re` but the module had not been imported.
+- *What I changed:* I added `import re` to `tools.py` and tested the function again. I also tested an impossible size to confirm that the function returned `[]` when there were no matches.
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked AI to help me connect the three tools in `run_agent` and make sure the agent stopped when a search returned no results.
+- *What came back:* AI suggested parsing the query with regular expressions, storing the parsed values and tool outputs in the session, and checking `search_results` before calling `suggest_outfit`.
+- *What I changed:* I implemented the branch so an empty search stores an actionable message in `session["error"]` and returns immediately. I then tested both a matching query and an impossible query to confirm that the successful path reached `create_fit_card` while the empty path stopped with `fit_card` still set to `None`.
+
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
