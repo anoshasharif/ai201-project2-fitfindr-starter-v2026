@@ -387,39 +387,27 @@ I moved search_listings from a direct function call to an MCP tool. I registered
 
 ## The Improvement
 
-<!-- What you changed, why your diagnosis pointed at it, and the after-run in
-     the same table format. One change, measured properly.
-
-     `python run_eval.py --label after` -->
-
 **What I changed:**
 
+I changed the prompt in `tools.py::create_fit_card` so that it now tells the model to write exactly three complete sentences with no bullet points or headings. The prompt still requires the item, price, platform, and outfit vibe.
+
 **Which failure it was meant to fix:**
+
+This change was meant to make Criterion 4 more reliable. Although Criterion 4 met its original target in the before run, its 4-of-5 target allowed one failure. Since the fit card's sentence count depends on model output, I tightened the prompt to make the required 2–4 sentence format more consistent.
 
 ### Run Log — After
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. Matching query completes all three tools and returns a fit card | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Empty search stops before tool 2 | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. Selected item stays consistent in session | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4. Fit card includes item details and is 2–4 sentences | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. Maximum price is respected | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
 **Did it help, and how do I know:**
 
-<!-- If it made things worse, say that. Honestly reported, that earns full
-     credit and is more interesting than one that worked. -->
-
-
-
----
-
-## What's Still Broken
-
-<!-- For each criterion still missed: what you'd do, and why you stopped where
-     you did. "I ran out of time" is fine if it's true. Pretending nothing is
-     left is not. -->
+Yes. The after run passed Criterion 4 in all five tries. Each fit card stayed within the required 2–4 sentence range while still including the selected item, price, platform, and outfit vibe. The other four criteria also continued to pass, so the prompt change improved the consistency of the fit card without breaking the rest of the agent.
 
 
 

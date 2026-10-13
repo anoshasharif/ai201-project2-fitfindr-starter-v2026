@@ -246,9 +246,9 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
     Outfit suggestion:
     {outfit}
 
-    Write two to four sentences. Make it sound like a real post, not a
-    product description. Mention the item, its price, and its platform
-    once each, and describe the outfit's vibe.
+    Write exactly three complete sentences with no bullet points or headings.
+    Make it sound like a real post, not a product description. Mention the
+    item, its price, and its platform once each, and describe the outfit's vibe.
     """
 
     return generate(prompt)
