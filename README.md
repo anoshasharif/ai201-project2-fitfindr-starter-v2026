@@ -201,6 +201,17 @@ Nothing beats the effortless vibe of a classic vintage fit. These dreamy vintage
 - *What came back:* AI suggested parsing the query with regular expressions, storing the parsed values and tool outputs in the session, and checking `search_results` before calling `suggest_outfit`.
 - *What I changed:* I implemented the branch so an empty search stores an actionable message in `session["error"]` and returns immediately. I then tested both a matching query and an impossible query to confirm that the successful path reached `create_fit_card` while the empty path stopped with `fit_card` still set to `None`.
 
+**Unit 4 – Moment 3**
+
+- *What I asked for:* I asked AI to help me move `search_listings` from a direct function call to an MCP tool while keeping the rest of the FitFindr agent working the same way.
+- *What came back:* AI helped me register `search_listings` in `mcp_server.py`, call it through `mcp_client.call_tool` in `agent.py`, and test that the MCP server exposed the correct tool and inputs.
+- *What I changed:* I updated `agent.py` to use the MCP version of `search_listings` and added tracing so the MCP call and the other tool calls could be seen step by step. I tested both a successful search and an empty search to confirm the agent still followed the correct branch.
+
+**Unit 4 – Moment 4**
+
+- *What I asked for:* I asked AI to help me interpret my five-try evaluation results and choose one improvement that I could test with a full before-and-after run.
+- *What came back:* AI helped me review the results and identify the model-generated fit card as a useful place to make the output format more predictable.
+- *What I changed:* I changed the prompt in `tools.py::create_fit_card` to request exactly three complete sentences with no bullet points or headings. I then ran `python run_eval.py --label after` and compared the results with my before run. All five criteria still met their targets, and Criterion 4 passed all five tries with the more constrained fit-card format.
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
@@ -438,6 +449,10 @@ Yes. The after run passed Criterion 4 in all five tries. Each fit card stayed wi
        [ ] All three failure modes triggered and handled
        [ ] One improvement, with Run Log — After in the same format
        [ ] What's Still Broken
+
+     None of the five acceptance criteria are still missed after the improvement. All five criteria met their targets in the after run.
+
+     The main limitation I would continue testing is model-output variability. Even with the more specific `create_fit_card` prompt, model-generated text can vary between runs. If I continued working on FitFindr, I would test the fit-card format across a wider variety of listings and wardrobes to make sure the three-sentence format and required item details remain consistent.
        [ ] At least four new commits
        [ ] The SAME repository URL as last unit
 
