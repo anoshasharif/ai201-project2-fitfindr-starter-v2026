@@ -222,20 +222,93 @@ Nothing beats the effortless vibe of a classic vintage fit. These dreamy vintage
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. Full three-tool run returns a fit card | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Empty search stops before tool 2 | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. Item in session matches item passed on | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4. Fit card includes item details and is 2–4 sentences | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. Maximum price is respected | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
 **Real output from one try**, pasted as text, naming the file and function
 that produced it:
 
 ```
+Criterion 1 — Full three-tool run returns a fit card
+Produced by: run_eval.py::main, using agent.py::run_agent
 
+Query: vintage graphic tee under $30
+stopped early: no
+selected_item: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+search_results: 10
+
+Trace:
+[1] search_listings (via MCP)
+    out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[2] suggest_outfit
+    out: Here are two specific outfit ideas using the Y2K butterfly baby tee and pieces from your current wardrobe...
+[3] create_fit_card
+    out: Living out my early 2000s dreams in this Y2K butterfly baby tee, and I am obsessed! I just scored it on Depop for $18...
+
+```
+Criterion 2 — Empty search stops before tool 2
+Produced by: run_eval.py::main, using agent.py::run_agent
+
+Query: designer ballgown size XXS under $5
+stopped early: yes
+selected_item: None
+search_results: 0
+
+Trace:
+[1] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: [] (empty)
+
+Error:
+No matching listings were found. Try changing the description, choosing a different size, or increasing your maximum price.
+
+```
+Criterion 3 — Item in session matches item passed on
+Produced by: run_eval.py::main, using agent.py::run_agent
+
+Query: vintage graphic tee under $30
+stopped early: no
+selected_item: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+search_results: 10
+
+Trace:
+[1] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[2] suggest_outfit
+      in:  dict with keys: new_item, wardrobe
+      out: Here are two outfit ideas using the Y2K butterfly baby tee and pieces already in your wardrobe...
+```
+Criterion 4 — Fit card includes item details and is 2–4 sentences
+Produced by: run_eval.py::main, using agent.py::run_agent
+
+Query: vintage graphic tee under $30
+stopped early: no
+selected_item: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+
+Fit card:
+Obsessed with this Y2K butterfly baby tee I just dropped on depop for $18! It gives the ultimate effortless streetwear vibe when you style it with baggy dark wash jeans and chunky sneakers. Grab it before it’s gone and get ready to live in this look all season.
+
+```
+Criterion 5 — Maximum price is respected
+Produced by: run_eval.py::main, using agent.py::run_agent
+
+Query: graphic tee under $25
+stopped early: no
+selected_item: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+search_results: 4
+
+Trace:
+[1] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: 4 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Mesh Long-Sleeve Top — Black … +1 more
 ```
 
 ---
+
 
 ## Verdicts and Diagnoses
 
@@ -257,15 +330,15 @@ that produced it:
 
 | # | Criterion | Target | Verdict | How I decided |
 |---|---|---|---|---|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
-| 5 |  |  |  |  |
+| 1 | Matching query completes all three tools and returns a fit card | 4 of 5 | MET (5/5) | All five tries completed `search_listings`, `suggest_outfit`, and `create_fit_card` and returned a fit card. |
+| 2 | Empty search stops before tool 2 | 5 of 5 | MET (5/5) | All five impossible-query tries returned zero search results and stopped before `suggest_outfit`. |
+| 3 | Selected item stays consistent in session | 5 of 5 | MET (5/5) | In all five tries, the selected listing was the same item passed from the search result into `suggest_outfit`. |
+| 4 | Fit card includes item details and is 2–4 sentences | 4 of 5 | MET (5/5) | All five fit cards identified the selected item, included its price and platform, and stayed within 2–4 sentences. |
+| 5 | Maximum price is respected | 5 of 5 | MET (5/5) | All five tries returned search results within the query's $25 maximum price. |
 
 **Diagnoses**
 
-
+All five criteria met their original targets, so there were no missed criteria requiring a failure diagnosis. The results suggest that some of my targets may have been conservative, especially Criterion 1 and Criterion 4, which required only 4 of 5 successful tries but passed 5 of 5. If I tightened one criterion, I would raise Criterion 4 to 5 of 5 because all five fit cards successfully included the required item details and stayed within the required sentence range.
 
 ---
 
