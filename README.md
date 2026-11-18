@@ -463,3 +463,15 @@ Yes. The after run passed Criterion 4 in all five tries. Each fit card stayed wi
 ---
 
 📖 **How to run this project: [RUNNING.md](RUNNING.md)**
+
+
+
+## Capstone
+
+**The Shape**
+
+For my Unit 9 Capstone, I chose to extend FitFindr, the AI-powered outfit recommendation system I developed in Units 3 and 4. I selected Shape B — Harden Against Failure. My extension focuses on improving how FitFindr handles situations where a clothing search returns no matching items. Instead of continuing with an empty result or producing an unclear response, the system should recognize the situation and return a helpful message explaining that no matching clothing items were found. This will make the existing system more reliable without changing its core functionality.
+
+**Out of Scope**
+
+I decided not to add new outfit recommendation tools, redesign the user interface, or introduce additional clothing data sources. I also will not retrain or replace any AI models. These changes would expand the project beyond the scope of Unit 9. My focus is improving one existing failure scenario while keeping the rest of FitFindr unchanged.
