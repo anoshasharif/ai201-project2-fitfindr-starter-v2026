@@ -470,8 +470,9 @@ Yes. The after run passed Criterion 4 in all five tries. Each fit card stayed wi
 
 **The Shape**
 
-For my Unit 9 Capstone, I chose to extend FitFindr, the AI-powered outfit recommendation system I developed in Units 3 and 4. I selected Shape B — Harden Against Failure. My extension focuses on improving how FitFindr handles situations where a clothing search returns no matching items. Instead of continuing with an empty result or producing an unclear response, the system should recognize the situation and return a helpful message explaining that no matching clothing items were found. This will make the existing system more reliable without changing its core functionality.
+For my Unit 9 Capstone, I selected FitFindr and Shape B — Harden Against Failure. My extension improves how the agent handles MCP search service failures. Previously, an MCP connection or tool error could interrupt the agent with an exception. The extension catches this failure, records it in the agent trace, and returns a helpful message without attempting to generate an outfit.
 
 **Out of Scope**
 
-I decided not to add new outfit recommendation tools, redesign the user interface, or introduce additional clothing data sources. I also will not retrain or replace any AI models. These changes would expand the project beyond the scope of Unit 9. My focus is improving one existing failure scenario while keeping the rest of FitFindr unchanged.
+I am not adding new recommendation tools, changing the clothing dataset, or redesigning the interface. I am keeping the extension focused on MCP search failure handling.
+
