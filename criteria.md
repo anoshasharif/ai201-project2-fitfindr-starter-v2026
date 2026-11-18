@@ -97,3 +97,47 @@ I chose 5 of 5 because the maximum price is a numeric filter, so the search shou
      A number you missed stays where it is, gets diagnosed, and gets a fix
      attempted. That's where the points are.
      ───────────────────────────────────────────────────────────────────────── -->
+
+
+## Unit 9 Capstone Acceptance Criteria
+
+**1. MCP Search Failure Handling (Extension)**
+
+When the MCP search service raises an MCPError, FitFindr must return a clear error message in all 3 of 3 test runs without crashing.
+
+**Target:** 100% of simulated MCP failures produce a readable error.
+
+**Reason:** An unavailable search service should not terminate the entire application. A lower success rate would leave some users with unexplained failures.
+
+**2. Preventing Outfit Generation After MCP Failure (Extension)**
+
+When an MCP search failure occurs, FitFindr must leave both `outfit_suggestion` and `fit_card` as `None` in all 3 of 3 test runs.
+
+**Target:** Zero outfit suggestions or fit cards generated after a search failure.
+
+**Reason:** Generating recommendations without valid search results could produce misleading clothing suggestions.
+
+**3. Structured Failure Logging (Extension)**
+
+For 3 simulated failed HTTP requests, FitFindr must write 3 separate JSON records to `results/capstone_runs.jsonl`. Every record must contain `timestamp`, `input`, `output`, `duration_seconds`, and `status`, with `status` equal to `failed`.
+
+**Target:** 3 of 3 failed requests logged with all five required fields.
+
+**Reason:** Missing failure records make debugging difficult. Complete logging is necessary to identify and investigate failures.
+
+**4. Successful Clothing Recommendations**
+
+For 3 runs of the query `vintage graphic tee under $30`, FitFindr must return at least one matching listing, a nonempty outfit suggestion, and a nonempty fit card without reporting an error.
+
+**Target:** 3 of 3 runs satisfy all four conditions.
+
+**Reason:** Failure handling should not interfere with the system's original recommendation functionality.
+
+**5. Empty Search Result Handling**
+
+For 3 runs of `designer ballgown size XXS under $5`, FitFindr must return an error containing `No matching listings`, leave `fit_card` as `None`, and return an empty `search_results` list.
+
+**Target:** 3 of 3 runs meet all three conditions.
+
+**Reason:** An empty search should produce a helpful response instead of fabricated recommendations. Any fabricated result would undermine user trust.
+
