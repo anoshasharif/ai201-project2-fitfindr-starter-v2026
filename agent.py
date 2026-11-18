@@ -16,7 +16,7 @@ import re
 import config
 import trace
 from tools import suggest_outfit, create_fit_card
-from mcp_client import call_tool
+from mcp_client import call_tool, MCPError
 from generate import ModelUnavailable
 from trace import check_iterations, start_trace, step
 
@@ -152,11 +152,23 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         "max_price": max_price,
     }
 
-    session["search_results"] = call_tool("search_listings", {
-    "description": session["parsed"]["description"],
-    "size": session["parsed"]["size"],
-    "max_price": session["parsed"]["max_price"],
-    })
+    try:
+        session["search_results"] = call_tool("search_listings", {
+            "description": session["parsed"]["description"],
+            "size": session["parsed"]["size"],
+            "max_price": session["parsed"]["max_price"],
+        })
+    except MCPError:
+        session["error"] = (
+            "The clothing search service is temporarily unavailable. "
+            "Please check the MCP server and try again."
+        )
+        step(
+            "search_listings_error",
+            inputs=session["parsed"],
+            returned={"error": session["error"]},
+        )
+        return session
 
     step(
         "search_listings (via MCP)",
