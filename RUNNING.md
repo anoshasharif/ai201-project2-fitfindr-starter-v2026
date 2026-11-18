@@ -246,3 +246,45 @@ history is what shows your criteria existed before your results did.
 units.
 
 `results/` is deliberately **not** in `.gitignore`.
+
+
+
+## Unit 9 Capstone — Path B: Local With Logs
+
+**Environment:** Python 3.11, 3.12, or 3.13; Windows PowerShell.
+
+**Setup from a fresh clone:**
+
+1. Clone the repository:
+   `git clone https://github.com/anoshasharif/ai201-project2-fitfindr-starter-v2026.git`
+
+2. Enter the folder:
+   `cd ai201-project2-fitfindr-starter-v2026`
+
+3. Create the environment:
+   `python -m venv .venv`
+
+4. Activate it:
+   `.venv\Scripts\Activate.ps1`
+
+5. Install dependencies:
+   `pip install -r requirements.txt`
+
+6. Create `.env`:
+   `Copy-Item .env.example .env`
+
+7. Add your `GEMINI_API_KEY` to `.env`.
+
+**Start command:** `python serve.py`
+
+**Test in another terminal:**
+
+`Invoke-RestMethod -Uri 'http://localhost:5000/health'`
+
+`Invoke-RestMethod -Uri 'http://localhost:5000/ask' -Method Post -ContentType 'application/json' -Body '{"query":"vintage graphic tee under $30"}'`
+
+**Logs:** Every `/ask` request is recorded in `results/capstone_runs.jsonl`, including failed and rejected requests.
+
+**Cost:** Average elapsed request time, measured using `time.perf_counter()`.
+
+**Dependencies:** See `requirements.txt`. The application uses the Gemini API and MCP SDK. No local model weights are required.
