@@ -36,6 +36,10 @@ what belongs in one — and the timing field is the one everybody skips.
 import os
 import sys
 import threading
+import json
+import time
+from datetime import datetime, timezone
+from pathlib import Path
 
 # config first, and before anything that talks to the model: it loads your .env
 # and fixes the Windows console encoding for every module that imports it.
@@ -47,6 +51,20 @@ from agent import run_agent
 from utils.data_loader import get_example_wardrobe
 
 app = Flask(__name__)
+
+LOG_PATH = Path("results/capstone_runs.jsonl")
+LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+def log_run(query, output, duration, status):
+    record = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "input": query,
+        "output": output,
+        "duration_seconds": round(duration, 4),
+        "status": status,
+    }
+    with LOG_PATH.open("a", encoding="utf-8") as file:
+        file.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 # ── one request at a time ─────────────────────────────────────────────────────
@@ -99,56 +117,38 @@ def health():
 
 @app.post("/ask")
 def ask():
-    """
-    Run the agent on one query.
-
-    In:   {"query": "...", "wardrobe": {...}}   wardrobe optional — leave it
-                                                out and you get the same
-                                                example wardrobe the CLI uses.
-    Out:  the session dict from run_agent(), as JSON.
-    """
+    started = time.perf_counter()
     payload = request.get_json(silent=True) or {}
-    query = (payload.get("query") or "").strip()
-    if not query:
-        # 400 rather than a stack trace: the caller can act on this one.
-        return jsonify({"error": "Send JSON with a 'query' field, e.g. "
-                                 '{"query": "vintage graphic tee under $30"}'}), 400
+    query = payload.get("query", "")
 
+    if not isinstance(query, str) or not query.strip():
+        output = {"error": "A non-empty query is required."}
+        log_run(query, output, time.perf_counter() - started, "rejected")
+        return jsonify(output), 400
+
+    query = query.strip()
     wardrobe = payload.get("wardrobe")
     if not isinstance(wardrobe, dict):
         wardrobe = get_example_wardrobe()
 
-    # A queued request should look like a queued request. Without this the
-    # second caller just sits there, and "slow" and "waiting its turn" are
-    # indistinguishable from the outside — which is how people conclude the
-    # deployment is broken when it is behaving exactly as designed.
-    #
-    # This is NOT the logging you add in the follow-along. It prints nothing
-    # on the normal path, carries no timing and counts nothing; it says only
-    # that this request had to wait. `locked()` can be a moment out of date,
-    # so the note is occasionally missed — which costs nothing, because
-    # nothing depends on it.
-    if _one_at_a_time.locked():
-        print(
-            "  [serve] another request is still running. This one is waiting "
-            "its turn — serve.py handles one at a time, on purpose.",
-            file=sys.stderr,
-            flush=True,
-        )
-
     failure = None
     session = None
+
     with _one_at_a_time:
         try:
             session = run_agent(query, wardrobe)
-        except Exception as exc:  # noqa: BLE001 — a 500 with a sentence beats a hang
+        except Exception as exc:
             failure = f"{type(exc).__name__}: {exc}"
 
-    # Outside the lock: building a response is not work the next caller should
-    # be waiting on.
-    if failure is not None:
-        return jsonify({"error": failure}), 500
+    duration = time.perf_counter() - started
 
+    if failure is not None:
+        output = {"error": "An unexpected processing error occurred."}
+        log_run(query, output, duration, "failed")
+        return jsonify(output), 500
+
+    status = "failed" if session.get("error") else "success"
+    log_run(query, session, duration, status)
     return jsonify(session)
 
 
