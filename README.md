@@ -497,3 +497,117 @@ FitFindr records HTTP requests in results/capstone_runs.jsonl. Each JSON record 
 **What It Costs**
 
 I measured ten consecutive local HTTP requests using Python time.perf_counter(). The average elapsed time was **2.5313 seconds per request** (9 successful runs and 1 failed search). This measures elapsed request time, not API spending.
+
+
+## Unit 9 Capstone — Milestone 5 Test Results
+
+**Acceptance Criteria Run Log**
+
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. MCP search failure handling | 3/3 readable errors, no crashes | PASS | PASS | PASS | MET |
+| 2. No outfit generation after MCP failure | 3/3 with null outfit and fit card | PASS | PASS | PASS | MET |
+| 3. Structured failure logging | 3/3 complete failed-request records | PASS | PASS | PASS | MET |
+| 4. Successful clothing recommendations | 3/3 complete recommendations | PASS | PASS | PASS | MET |
+| 5. Empty search result handling | 3/3 correct empty-result responses | PASS | PASS | PASS | MET |
+
+**Criterion 1 — MCP Failure Handling**
+
+Source: `test_capstone.py`, `test_mcp_failure_returns_helpful_error()`, calling `agent.py`, `run_agent()`.
+
+Actual output from Trial 1:
+
+```text
+test_mcp_failure_returns_helpful_error ... ok
+[1] search_listings_error
+      in: dict with keys: description, size, max_price
+      out: dict with keys: error
+Ran 2 tests in 0.006s
+OK
+```
+
+**Criterion 2 — Preventing Outfit Generation**
+
+Source: `test_capstone.py`, `test_mcp_failure_returns_helpful_error()`, calling `agent.py`, `run_agent()`.
+
+The test explicitly checks that both `fit_card` and `outfit_suggestion` are `None`.
+
+Actual output from the failure log:
+
+```json
+{
+  "outfit_suggestion": null,
+  "fit_card": null,
+  "error": "The clothing search service is temporarily unavailable. Please check the MCP server and try again."
+}
+```
+
+**Criterion 3 — Structured Failure Logging**
+
+Source: `serve.py`, `ask()` and `log_run()`. The test used Flask's test client with a simulated MCPError.
+
+Actual output:
+
+```text
+TRIAL 1: PASS
+TRIAL 2: PASS
+TRIAL 3: PASS
+```
+
+Actual recorded log fields and values from Trial 1:
+
+```json
+{
+  "timestamp": "2026-11-18T21:36:39.710618+00:00",
+  "input": "vintage graphic tee under $30",
+  "duration_seconds": 0.0012,
+  "status": "failed"
+}
+```
+
+The actual JSONL record also contains the `output` object with the failed agent response.
+
+**Criterion 4 — Successful Clothing Recommendations**
+
+Source: `serve.py`, `ask()`, calling `agent.py`, `run_agent()`.
+
+Actual output from Trial 1:
+
+```text
+[1] search_listings (via MCP)
+      out: 10 items: Y2K Baby Tee — Butterfly Print,
+      Graphic Tee — 2003 Tour Bootleg Style,
+      Vintage Band Tee — Faded Grey … +7 more
+[2] suggest_outfit
+[3] create_fit_card
+
+TRIAL 1: PASS
+HTTP status: 200
+Checks: {'matching_listing': True, 'outfit_suggestion': True, 'fit_card': True, 'no_error': True}
+Selected item: Y2K Baby Tee — Butterfly Print
+```
+
+Trials 2 and 3 also passed all four checks.
+
+**Criterion 5 — Empty Search Result Handling**
+
+Source: `agent.py`, `run_agent()`, tested with a mocked empty MCP search response.
+
+Actual output from Trial 1:
+
+```text
+[1] search_listings (via MCP)
+      in: dict with keys: description, size, max_price
+      out: [] (empty)
+TRIAL 1: PASS
+Checks: {'error_message': True, 'no_fit_card': True, 'empty_results': True}
+Error: No matching listings were found. Try changing the description, choosing a different size, or increasing your maximum price.
+Search results: []
+Fit card: None
+```
+
+Trials 2 and 3 produced the same passing results.
+
+**Final Verdict**
+
+All five acceptance criteria were met across three trials each. FitFindr successfully handled simulated MCP failures, prevented invalid outfit generation, recorded structured failure logs, maintained normal recommendation functionality, and handled empty search results without fabricating recommendations.
