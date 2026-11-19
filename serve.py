@@ -55,16 +55,31 @@ app = Flask(__name__)
 LOG_PATH = Path("results/capstone_runs.jsonl")
 LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+
 def log_run(query, output, duration, status):
+    error_type = None
+
+    if status == "rejected":
+        error_type = "invalid_input"
+    elif status == "failed":
+        error_message = str(output.get("error") or "")
+        if "temporarily unavailable" in error_message:
+            error_type = "mcp_failure"
+        else:
+            error_type = "processing_failure"
+
     record = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "input": query,
         "output": output,
         "duration_seconds": round(duration, 4),
         "status": status,
+        "error_type": error_type,
     }
+
     with LOG_PATH.open("a", encoding="utf-8") as file:
         file.write(json.dumps(record, ensure_ascii=False) + "\n")
+
 
 
 # ── one request at a time ─────────────────────────────────────────────────────

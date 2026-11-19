@@ -611,3 +611,90 @@ Trials 2 and 3 produced the same passing results.
 **Final Verdict**
 
 All five acceptance criteria were met across three trials each. FitFindr successfully handled simulated MCP failures, prevented invalid outfit generation, recorded structured failure logs, maintained normal recommendation functionality, and handled empty search results without fabricating recommendations.
+
+
+## Unit 9 Capstone — Milestone 6 Improvement and Retest
+
+**Original Verdicts**
+
+All five acceptance criteria were MET during Milestone 5. No criteria were missed, so there were no observed failures requiring diagnosis.
+
+The original targets were relatively limited because each criterion required only three successful trials. A stricter future target for structured failure logging would be 10 of 10 correctly classified failures, including MCP failures, unexpected exceptions, and invalid inputs.
+
+**One Improvement**
+
+I improved the `log_run()` function in `serve.py` by adding an `error_type` field to structured JSON logs.
+
+Previously, failed requests were recorded with `status: "failed"`, but the log did not explicitly classify the failure.
+
+The improvement now distinguishes `mcp_failure`, `processing_failure`, and `invalid_input`, while successful requests use `null`.
+
+This improvement makes failures easier to identify during debugging without changing the agent's recommendation behavior.
+
+**Before-Improvement Results**
+
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. MCP failure handling | 3/3 | PASS | PASS | PASS | MET |
+| 2. Prevent outfit generation after failure | 3/3 | PASS | PASS | PASS | MET |
+| 3. Structured failure logging | 3/3 | PASS | PASS | PASS | MET |
+| 4. Successful clothing recommendations | 3/3 | PASS | PASS | PASS | MET |
+| 5. Empty result handling | 3/3 | PASS | PASS | PASS | MET |
+
+**After-Improvement Results**
+
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| 1. MCP failure handling | 3/3 | PASS | PASS | PASS | MET |
+| 2. Prevent outfit generation after failure | 3/3 | PASS | PASS | PASS | MET |
+| 3. Structured failure logging | 3/3 | PASS | PASS | PASS | MET |
+| 4. Successful clothing recommendations | 3/3 | PASS | PASS | PASS | MET |
+| 5. Empty result handling | 3/3 | PASS | PASS | PASS | MET |
+
+**Actual After-Improvement Evidence**
+
+Source: `test_capstone.py`, `test_mcp_failure_returns_helpful_error()` and `test_empty_results_still_work()`.
+
+```text
+AFTER TRIAL 1: Ran 2 tests — OK
+AFTER TRIAL 2: Ran 2 tests — OK
+AFTER TRIAL 3: Ran 2 tests — OK
+```
+
+Source: `serve.py`, `ask()` and `log_run()`.
+
+```text
+AFTER TRIAL 1: PASS
+Checks: {'failed_status': True, 'error_type': True, 'required_fields': True}
+Error type: mcp_failure
+
+AFTER TRIAL 2: PASS
+Checks: {'failed_status': True, 'error_type': True, 'required_fields': True}
+Error type: mcp_failure
+
+AFTER TRIAL 3: PASS
+Checks: {'failed_status': True, 'error_type': True, 'required_fields': True}
+Error type: mcp_failure
+```
+
+Source: `serve.py`, `ask()`, calling `agent.py`, `run_agent()`.
+
+```text
+AFTER TRIAL 1: PASS
+HTTP status: 200
+AFTER TRIAL 2: PASS
+HTTP status: 200
+AFTER TRIAL 3: PASS
+HTTP status: 200
+```
+
+**Did the Improvement Help?**
+
+Yes. All five acceptance criteria remained MET after the improvement. The new `error_type` field successfully classified all three simulated MCP failures.
+
+The improvement increased the usefulness of failure logs without introducing any observed regressions. However, it did not increase the acceptance-criteria pass rate because all five criteria already passed before the change.
+
+**Remaining Limitations**
+
+The tests cover only three trials per criterion, and the MCP failures were simulated. More extensive testing with actual service outages and unexpected exceptions would provide stronger evidence of reliability.
+
