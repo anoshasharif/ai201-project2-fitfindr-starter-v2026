@@ -396,7 +396,7 @@ I moved search_listings from a direct function call to an MCP tool. I registered
 
 ---
 
-## The Improvement
+##  The Improvement
 
 **What I changed:**
 
@@ -477,7 +477,7 @@ For my Unit 9 Capstone, I selected FitFindr and Shape B — Harden Against Failu
 I am not adding new recommendation tools, changing the clothing dataset, or redesigning the interface. I am keeping the extension focused on MCP search failure handling.
 
 
-**Instrumentation**
+Instrumentation**
 
 FitFindr records HTTP requests in results/capstone_runs.jsonl. Each JSON record contains a UTC timestamp, input, output, duration in seconds, and status. The following are ten actual runs, including one failed search.
 
@@ -494,9 +494,47 @@ FitFindr records HTTP requests in results/capstone_runs.jsonl. Each JSON record 
 {"timestamp": "2026-11-18T04:17:56.418541+00:00", "input": "designer ballgown size XXS under $5", "output": {"query": "designer ballgown size XXS under $5", "parsed": {"description": "designer ballgown", "size": "XXS", "max_price": 5.0}, "search_results": [], "selected_item": null, "wardrobe": {"items": [{"id": "w_001", "name": "Baggy straight-leg jeans, dark wash", "category": "bottoms", "colors": ["dark blue", "indigo"], "style_tags": ["denim", "streetwear", "baggy"], "notes": "High-waisted, sits above the hip"}, {"id": "w_002", "name": "Wide-leg khaki trousers", "category": "bottoms", "colors": ["khaki", "tan"], "style_tags": ["earth tones", "minimal", "wide-leg"], "notes": null}, {"id": "w_003", "name": "White ribbed tank top", "category": "tops", "colors": ["white"], "style_tags": ["basics", "minimal", "fitted"], "notes": "Goes with everything"}, {"id": "w_004", "name": "Oversized grey crewneck sweatshirt", "category": "tops", "colors": ["grey", "charcoal"], "style_tags": ["oversized", "basics", "cozy"], "notes": "Really oversized — drops below the hip"}, {"id": "w_005", "name": "Black cropped zip hoodie", "category": "tops", "colors": ["black"], "style_tags": ["athletic", "streetwear", "cropped"], "notes": null}, {"id": "w_006", "name": "Vintage black denim jacket", "category": "outerwear", "colors": ["black"], "style_tags": ["denim", "vintage", "classic"], "notes": "Slightly cropped"}, {"id": "w_007", "name": "Chunky white sneakers", "category": "shoes", "colors": ["white"], "style_tags": ["sneakers", "chunky", "streetwear"], "notes": null}, {"id": "w_008", "name": "Black combat boots", "category": "shoes", "colors": ["black"], "style_tags": ["boots", "grunge", "classic"], "notes": "Lace-up, mid-ankle height"}, {"id": "w_009", "name": "Brown leather belt", "category": "accessories", "colors": ["brown"], "style_tags": ["classic", "earth tones", "accessories"], "notes": null}, {"id": "w_010", "name": "Black crossbody bag", "category": "accessories", "colors": ["black"], "style_tags": ["minimal", "accessories", "everyday"], "notes": null}]}, "outfit_suggestion": null, "fit_card": null, "error": "No matching listings were found. Try changing the description, choosing a different size, or increasing your maximum price."}, "duration_seconds": 0.9436, "status": "failed"}
 ```
 
-**What It Costs**
 
-I measured ten consecutive local HTTP requests using Python time.perf_counter(). The average elapsed time was **2.5313 seconds per request** (9 successful runs and 1 failed search). This measures elapsed request time, not API spending.
+### What It Costs**
+
+I measured the elapsed time of ten consecutive local HTTP requests using Python's `time.perf_counter()`. Nine requests succeeded and one returned an expected failed-search result.
+
+The average elapsed time was **2.5313 seconds per request**.
+
+For 100 users making one request each per day:
+
+100 requests × 2.5313 seconds = 253.13 seconds
+
+253.13 ÷ 60 = approximately 4.22 minutes of cumulative request-processing time per day.
+
+Over 30 days:
+
+3,000 requests × 2.5313 seconds = 7,593.9 seconds, or approximately 2.11 hours of cumulative request-processing time.
+
+These figures represent processing time, not monetary API costs. Actual operating expenses would depend on Gemini API pricing, token usage, hosting, and request volume.
+
+### What's Still Broken**
+
+All five acceptance criteria were MET in both the before-improvement and after-improvement evaluations. There were no observed failures against the original targets.
+
+However, Criterion 3, Structured Failure Logging, had a relatively low target of 3 out of 3 failed requests being recorded correctly. Three simulated failures do not demonstrate that logging will remain reliable under more varied conditions.
+
+I would tighten this target to **10 out of 10 correctly classified and logged requests**, including MCP failures, unexpected processing exceptions, and invalid user inputs.
+
+The current improvement successfully adds an `error_type` field, but it classifies failures using error-message text. This could misclassify errors if the message wording changes.
+
+I stopped here because the milestone required one focused improvement, and the existing acceptance criteria were met. A larger failure-injection test suite would require additional development and testing.
+
+### What I Would Do Next**
+
+If I had another unit, I would replace message-based error classification with explicit exception types and error codes. I would prioritize this because accurate failure classification makes production debugging more dependable even when error messages change.
+
+### How I Used AI**
+
+I used ChatGPT to help organize my capstone work, develop testing commands, review terminal output, and prepare documentation. AI also assisted with drafting acceptance criteria, suggesting the structured logging improvement, and creating before-and-after result tables.
+
+I executed the tests locally, inspected the actual outputs, implemented the logging change, and committed the results to GitHub. I used the recorded results to report what passed and identify remaining limitations rather than inventing test outcomes.
+
 
 
 ## Unit 9 Capstone — Milestone 5 Test Results
@@ -511,7 +549,7 @@ I measured ten consecutive local HTTP requests using Python time.perf_counter().
 | 4. Successful clothing recommendations | 3/3 complete recommendations | PASS | PASS | PASS | MET |
 | 5. Empty search result handling | 3/3 correct empty-result responses | PASS | PASS | PASS | MET |
 
-**Criterion 1 — MCP Failure Handling**
+### Criterion 1 — MCP Failure Handling**
 
 Source: `test_capstone.py`, `test_mcp_failure_returns_helpful_error()`, calling `agent.py`, `run_agent()`.
 
@@ -526,7 +564,7 @@ Ran 2 tests in 0.006s
 OK
 ```
 
-**Criterion 2 — Preventing Outfit Generation**
+### Criterion 2 — Preventing Outfit Generation**
 
 Source: `test_capstone.py`, `test_mcp_failure_returns_helpful_error()`, calling `agent.py`, `run_agent()`.
 
@@ -542,7 +580,7 @@ Actual output from the failure log:
 }
 ```
 
-**Criterion 3 — Structured Failure Logging**
+### Criterion 3 — Structured Failure Logging**
 
 Source: `serve.py`, `ask()` and `log_run()`. The test used Flask's test client with a simulated MCPError.
 
@@ -567,7 +605,7 @@ Actual recorded log fields and values from Trial 1:
 
 The actual JSONL record also contains the `output` object with the failed agent response.
 
-**Criterion 4 — Successful Clothing Recommendations**
+### Criterion 4 — Successful Clothing Recommendations**
 
 Source: `serve.py`, `ask()`, calling `agent.py`, `run_agent()`.
 
@@ -589,7 +627,7 @@ Selected item: Y2K Baby Tee — Butterfly Print
 
 Trials 2 and 3 also passed all four checks.
 
-**Criterion 5 — Empty Search Result Handling**
+### Criterion 5 — Empty Search Result Handling**
 
 Source: `agent.py`, `run_agent()`, tested with a mocked empty MCP search response.
 
@@ -608,20 +646,20 @@ Fit card: None
 
 Trials 2 and 3 produced the same passing results.
 
-**Final Verdict**
+### Final Verdict**
 
 All five acceptance criteria were met across three trials each. FitFindr successfully handled simulated MCP failures, prevented invalid outfit generation, recorded structured failure logs, maintained normal recommendation functionality, and handled empty search results without fabricating recommendations.
 
 
 ## Unit 9 Capstone — Milestone 6 Improvement and Retest
 
-**Original Verdicts**
+### Original Verdicts
 
 All five acceptance criteria were MET during Milestone 5. No criteria were missed, so there were no observed failures requiring diagnosis.
 
 The original targets were relatively limited because each criterion required only three successful trials. A stricter future target for structured failure logging would be 10 of 10 correctly classified failures, including MCP failures, unexpected exceptions, and invalid inputs.
 
-**One Improvement**
+### One Improvement
 
 I improved the `log_run()` function in `serve.py` by adding an `error_type` field to structured JSON logs.
 
@@ -631,7 +669,7 @@ The improvement now distinguishes `mcp_failure`, `processing_failure`, and `inva
 
 This improvement makes failures easier to identify during debugging without changing the agent's recommendation behavior.
 
-**Before-Improvement Results**
+### Before-Improvement Results
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
@@ -641,7 +679,7 @@ This improvement makes failures easier to identify during debugging without chan
 | 4. Successful clothing recommendations | 3/3 | PASS | PASS | PASS | MET |
 | 5. Empty result handling | 3/3 | PASS | PASS | PASS | MET |
 
-**After-Improvement Results**
+### After-Improvement Results
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
@@ -651,7 +689,7 @@ This improvement makes failures easier to identify during debugging without chan
 | 4. Successful clothing recommendations | 3/3 | PASS | PASS | PASS | MET |
 | 5. Empty result handling | 3/3 | PASS | PASS | PASS | MET |
 
-**Actual After-Improvement Evidence**
+### Actual After-Improvement Evidence
 
 Source: `test_capstone.py`, `test_mcp_failure_returns_helpful_error()` and `test_empty_results_still_work()`.
 
@@ -688,13 +726,12 @@ AFTER TRIAL 3: PASS
 HTTP status: 200
 ```
 
-**Did the Improvement Help?**
+### Did the Improvement Help?
 
 Yes. All five acceptance criteria remained MET after the improvement. The new `error_type` field successfully classified all three simulated MCP failures.
 
 The improvement increased the usefulness of failure logs without introducing any observed regressions. However, it did not increase the acceptance-criteria pass rate because all five criteria already passed before the change.
 
-**Remaining Limitations**
+### Remaining Limitations
 
 The tests cover only three trials per criterion, and the MCP failures were simulated. More extensive testing with actual service outages and unexpected exceptions would provide stronger evidence of reliability.
-
